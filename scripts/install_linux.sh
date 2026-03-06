@@ -99,6 +99,13 @@ else
     log "gh already installed: $(gh --version | head -1)"
 fi
 
+step "Authenticating GitHub CLI"
+if ! gh auth status &>/dev/null; then
+    gh auth login
+else
+    log "Already authenticated: $(gh auth status 2>&1 | grep 'Logged in' | xargs)"
+fi
+
 # ── Oh My Zsh ────────────────────────────────────────────────
 step "Installing Oh My Zsh"
 if [ ! -d "$HOME/.oh-my-zsh" ]; then

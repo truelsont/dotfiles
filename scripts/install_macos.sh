@@ -46,6 +46,14 @@ brew install \
 # macOS-specific fzf setup
 $(brew --prefix)/opt/fzf/install --all --no-update-rc 2>/dev/null || true
 
+# ── GitHub CLI auth ───────────────────────────────────────────
+step "Authenticating GitHub CLI"
+if ! gh auth status &>/dev/null; then
+    gh auth login
+else
+    log "Already authenticated: $(gh auth status 2>&1 | grep 'Logged in' | xargs)"
+fi
+
 # ── uv (Python package/project manager) ──────────────────────
 step "Installing uv"
 if ! command -v uv &>/dev/null; then
