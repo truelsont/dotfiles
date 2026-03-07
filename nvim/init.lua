@@ -108,14 +108,20 @@ require("lazy").setup({
         "nvim-treesitter/nvim-treesitter",
         build = ":TSUpdate",
         config = function()
-            require("nvim-treesitter.configs").setup({
-                ensure_installed = {
-                    "lua", "python", "c", "cpp", "rust", "go",
-                    "typescript", "javascript", "json", "yaml",
-                    "toml", "markdown", "bash", "dockerfile",
-                },
-                highlight = { enable = true },
-                indent   = { enable = true },
+            local ensure = {
+                "lua", "python", "c", "cpp", "rust", "go",
+                "typescript", "javascript", "json", "yaml",
+                "toml", "markdown", "bash", "dockerfile",
+            }
+            require("nvim-treesitter").setup()
+            vim.treesitter.language.register("bash", "zsh")
+            for _, lang in ipairs(ensure) do
+                pcall(vim.treesitter.language.add, lang)
+            end
+            vim.api.nvim_create_autocmd("FileType", {
+                callback = function(args)
+                    pcall(vim.treesitter.start, args.buf)
+                end,
             })
         end,
     },
@@ -134,26 +140,27 @@ require("lazy").setup({
                 automatic_installation = true,
             })
 
-            local lspconfig = require("lspconfig")
-            local on_attach = function(_, bufnr)
-                local opts = { buffer = bufnr }
-                map("n", "gd",  vim.lsp.buf.definition, opts)
-                map("n", "K",   vim.lsp.buf.hover, opts)
-                map("n", "<leader>rn", vim.lsp.buf.rename, opts)
-                map("n", "<leader>ca", vim.lsp.buf.code_action, opts)
-                map("n", "gr",  vim.lsp.buf.references, opts)
-                map("n", "<leader>f", function()
-                    vim.lsp.buf.format({ async = true })
-                end, opts)
-            end
+            vim.api.nvim_create_autocmd("LspAttach", {
+                callback = function(args)
+                    local opts = { buffer = args.buf }
+                    map("n", "gd",  vim.lsp.buf.definition, opts)
+                    map("n", "K",   vim.lsp.buf.hover, opts)
+                    map("n", "<leader>rn", vim.lsp.buf.rename, opts)
+                    map("n", "<leader>ca", vim.lsp.buf.code_action, opts)
+                    map("n", "gr",  vim.lsp.buf.references, opts)
+                    map("n", "<leader>f", function()
+                        vim.lsp.buf.format({ async = true })
+                    end, opts)
+                end,
+            })
 
-            lspconfig.pyright.setup({ on_attach = on_attach })
-            lspconfig.clangd.setup({ on_attach = on_attach })
-            lspconfig.ts_ls.setup({ on_attach = on_attach })
-            lspconfig.lua_ls.setup({
-                on_attach = on_attach,
+            vim.lsp.config("pyright", {})
+            vim.lsp.config("clangd", {})
+            vim.lsp.config("ts_ls", {})
+            vim.lsp.config("lua_ls", {
                 settings = { Lua = { diagnostics = { globals = { "vim" } } } },
             })
+            vim.lsp.enable({ "pyright", "clangd", "ts_ls", "lua_ls" })
         end,
     },
 

@@ -44,7 +44,9 @@ brew install \
     gh
 
 # macOS-specific fzf setup
-$(brew --prefix)/opt/fzf/install --all --no-update-rc 2>/dev/null || true
+if [ ! -f ~/.fzf.zsh ]; then
+    $(brew --prefix)/opt/fzf/install --all --no-update-rc 2>/dev/null || true
+fi
 
 # ── GitHub CLI auth ───────────────────────────────────────────
 step "Authenticating GitHub CLI"
@@ -101,6 +103,24 @@ else
     log "Oh My Zsh already installed"
 fi
 
+# ── Zsh plugins (external) ──────────────────────────────────
+step "Installing zsh plugins"
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    log "zsh-autosuggestions installed"
+else
+    log "zsh-autosuggestions already installed"
+fi
+
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    log "zsh-syntax-highlighting installed"
+else
+    log "zsh-syntax-highlighting already installed"
+fi
+
 # ── Symlink dotfiles ─────────────────────────────────────────
 step "Symlinking dotfiles"
 symlink() {
@@ -113,8 +133,10 @@ symlink() {
     fi
 }
 
-symlink "tmux/tmux.conf"     ".tmux.conf"
-symlink "nvim/init.lua"      ".config/nvim/init.lua"
-symlink "shell/zshrc_macos"  ".zshrc"
+symlink "tmux/tmux.conf"       ".tmux.conf"
+symlink "nvim/init.lua"        ".config/nvim/init.lua"
+symlink "shell/zshrc_macos"    ".zshrc"
+symlink "claude/CLAUDE.md"     ".claude/CLAUDE.md"
+symlink "claude/settings.json" ".claude/settings.json"
 
 step "Done! Restart your shell or run: source ~/.zshrc"

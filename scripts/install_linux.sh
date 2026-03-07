@@ -11,7 +11,7 @@ step() { echo; echo "══ $* ══"; }
 
 # ── System packages ──────────────────────────────────────────
 step "Updating apt"
-sudo apt update && sudo apt upgrade -y
+sudo apt update
 
 step "Installing core tools"
 sudo apt install -y \
@@ -25,6 +25,7 @@ sudo apt install -y \
     python3 python3-pip python3-venv \
     nodejs npm \
     sqlite3 \
+    xclip \
     ca-certificates gnupg
 
 # ── Neovim (latest stable via AppImage or PPA) ───────────────
@@ -88,11 +89,15 @@ fi
 # ── GitHub CLI ───────────────────────────────────────────────
 step "Installing GitHub CLI"
 if ! command -v gh &>/dev/null; then
-    curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
-        | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
-        https://cli.github.com/packages stable main" \
-        | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    if [ ! -f /usr/share/keyrings/githubcli-archive-keyring.gpg ]; then
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
+            | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+    fi
+    if [ ! -f /etc/apt/sources.list.d/github-cli.list ]; then
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] \
+            https://cli.github.com/packages stable main" \
+            | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+    fi
     sudo apt update && sudo apt install -y gh
     log "GitHub CLI installed"
 else
@@ -115,6 +120,24 @@ else
     log "Oh My Zsh already installed"
 fi
 
+# ── Zsh plugins (external) ──────────────────────────────────
+step "Installing zsh plugins"
+ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
+
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-autosuggestions" ]; then
+    git clone https://github.com/zsh-users/zsh-autosuggestions "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
+    log "zsh-autosuggestions installed"
+else
+    log "zsh-autosuggestions already installed"
+fi
+
+if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
+    git clone https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+    log "zsh-syntax-highlighting installed"
+else
+    log "zsh-syntax-highlighting already installed"
+fi
+
 # ── Symlink dotfiles ─────────────────────────────────────────
 step "Symlinking dotfiles"
 symlink() {
@@ -127,9 +150,11 @@ symlink() {
     fi
 }
 
-symlink "tmux/tmux.conf"     ".tmux.conf"
-symlink "nvim/init.lua"      ".config/nvim/init.lua"
-symlink "shell/zshrc_linux"  ".zshrc"
+symlink "tmux/tmux.conf"       ".tmux.conf"
+symlink "nvim/init.lua"        ".config/nvim/init.lua"
+symlink "shell/zshrc_linux"    ".zshrc"
+symlink "claude/CLAUDE.md"     ".claude/CLAUDE.md"
+symlink "claude/settings.json" ".claude/settings.json"
 
 step "Done! Restart your shell or run: source ~/.zshrc"
 echo "Note: log out and back in for Docker group changes to take effect."
