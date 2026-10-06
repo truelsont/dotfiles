@@ -43,6 +43,9 @@ brew install \
     neovim \
     gh
 
+# tree-sitter CLI (needed for nvim-treesitter to compile parsers like latex)
+npm install -g tree-sitter-cli
+
 # macOS-specific fzf setup
 if [ ! -f ~/.fzf.zsh ]; then
     $(brew --prefix)/opt/fzf/install --all --no-update-rc 2>/dev/null || true
@@ -133,10 +136,29 @@ symlink() {
     fi
 }
 
-symlink "tmux/tmux.conf"       ".tmux.conf"
-symlink "nvim/init.lua"        ".config/nvim/init.lua"
-symlink "shell/zshrc_macos"    ".zshrc"
-symlink "claude/CLAUDE.md"     ".claude/CLAUDE.md"
-symlink "claude/settings.json" ".claude/settings.json"
+symlink "tmux/tmux.conf"        ".tmux.conf"
+symlink "nvim/init.lua"         ".config/nvim/init.lua"
+symlink "shell/zshrc_macos"     ".zshrc"
+symlink "shell/zshrc_common"    ".zshrc_common"
+symlink "claude/CLAUDE.md"      ".claude/CLAUDE.md"
+symlink "claude/settings.json"  ".claude/settings.json"
 
-step "Done! Restart your shell or run: source ~/.zshrc"
+# ── Default shell ────────────────────────────────────────────
+# Without this, a login shell of bash will try to parse the new
+# zsh-syntax ~/.zshrc and fail (e.g. unexpected EOF), and Terminal
+# sessions open into a shell that never loads our config.
+step "Setting zsh as default shell"
+TARGET_ZSH="$(command -v zsh)"
+if ! grep -qx "$TARGET_ZSH" /etc/shells; then
+    echo "$TARGET_ZSH" | sudo tee -a /etc/shells >/dev/null
+    log "Added $TARGET_ZSH to /etc/shells"
+fi
+CURRENT_SHELL="$(dscl . -read "/Users/$USER" UserShell 2>/dev/null | awk '{print $2}')"
+if [ "$CURRENT_SHELL" != "$TARGET_ZSH" ]; then
+    log "Changing default shell from $CURRENT_SHELL to $TARGET_ZSH (will prompt for password)"
+    chsh -s "$TARGET_ZSH" || log "chsh failed — run manually: chsh -s $TARGET_ZSH"
+else
+    log "Default shell already $TARGET_ZSH"
+fi
+
+step "Done! Open a NEW terminal window (so login shell is zsh) or run: exec zsh"

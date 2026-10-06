@@ -1,0 +1,42 @@
+# ── Prompt ───────────────────────────────────────────────────
+autoload -Uz vcs_info
+precmd() { vcs_info }
+zstyle ':vcs_info:git:*' formats ' %F{yellow}(%b)%f'
+setopt PROMPT_SUBST
+PROMPT='%F{cyan}%~%f${vcs_info_msg_0_} %F{green}❯%f '
+
+# ── Aliases ──────────────────────────────────────────────────
+alias vi='nvim'
+alias vim='nvim'
+alias ..='cd ..'
+alias ...='cd ../..'
+alias grep='grep --color=auto'
+alias g='git'
+alias gs='git status'
+alias gp='git push'
+alias gl='git pull'
+alias gc='git commit'
+alias gco='git checkout'
+alias fixmouse="printf '\e[?1000l\e[?1002l\e[?1003l\e[?1006l'"
+
+command -v bat  &>/dev/null && alias cat='bat --style=plain'
+command -v fd   &>/dev/null && alias find='fd'
+command -v btop &>/dev/null && alias top='btop' || command -v htop &>/dev/null && alias top='htop'
+
+# ── fzf ──────────────────────────────────────────────────────
+[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+export FZF_DEFAULT_COMMAND='fd --type f --hidden --follow --exclude .git'
+export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
+
+# ── uv / Python ──────────────────────────────────────────────
+export UV_PYTHON_PREFERENCE=managed
+
+# ── Editor ───────────────────────────────────────────────────
+export EDITOR='nvim'
+export VISUAL='nvim'
+
+# ── History ──────────────────────────────────────────────────
+HISTSIZE=10000
+SAVEHIST=10000
+setopt HIST_IGNORE_DUPS
+setopt HIST_IGNORE_SPACE

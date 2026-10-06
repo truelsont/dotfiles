@@ -28,6 +28,9 @@ sudo apt install -y \
     xclip \
     ca-certificates gnupg
 
+# tree-sitter CLI (needed for nvim-treesitter to compile parsers like latex)
+npm install -g tree-sitter-cli
+
 # ── Neovim (latest stable via AppImage or PPA) ───────────────
 step "Installing Neovim"
 if ! command -v nvim &>/dev/null; then
@@ -150,11 +153,29 @@ symlink() {
     fi
 }
 
-symlink "tmux/tmux.conf"       ".tmux.conf"
-symlink "nvim/init.lua"        ".config/nvim/init.lua"
-symlink "shell/zshrc_linux"    ".zshrc"
-symlink "claude/CLAUDE.md"     ".claude/CLAUDE.md"
-symlink "claude/settings.json" ".claude/settings.json"
+symlink "tmux/tmux.conf"        ".tmux.conf"
+symlink "nvim/init.lua"         ".config/nvim/init.lua"
+symlink "shell/zshrc_linux"     ".zshrc"
+symlink "shell/zshrc_common"    ".zshrc_common"
+symlink "claude/CLAUDE.md"      ".claude/CLAUDE.md"
+symlink "claude/settings.json"  ".claude/settings.json"
 
-step "Done! Restart your shell or run: source ~/.zshrc"
+# ── Default shell ────────────────────────────────────────────
+# Without this, a login shell of bash will try to parse the new
+# zsh-syntax ~/.zshrc and fail, and new terminals never load our config.
+step "Setting zsh as default shell"
+TARGET_ZSH="$(command -v zsh)"
+if ! grep -qx "$TARGET_ZSH" /etc/shells; then
+    echo "$TARGET_ZSH" | sudo tee -a /etc/shells >/dev/null
+    log "Added $TARGET_ZSH to /etc/shells"
+fi
+CURRENT_SHELL="$(getent passwd "$USER" | cut -d: -f7)"
+if [ "$CURRENT_SHELL" != "$TARGET_ZSH" ]; then
+    log "Changing default shell from $CURRENT_SHELL to $TARGET_ZSH (will prompt for password)"
+    chsh -s "$TARGET_ZSH" || log "chsh failed — run manually: chsh -s $TARGET_ZSH"
+else
+    log "Default shell already $TARGET_ZSH"
+fi
+
+step "Done! Open a NEW terminal window (so login shell is zsh) or run: exec zsh"
 echo "Note: log out and back in for Docker group changes to take effect."
