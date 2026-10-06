@@ -227,4 +227,16 @@ require("lazy").setup({
 
     -- Which-key (shows keybindings)
     { "folke/which-key.nvim",  config = true },
+
+    -- Inline LaTeX math rendering as unicode/ASCII art (cross-platform, works in tmux)
+    {
+        "jbyuki/nabla.nvim",
+        ft = { "markdown", "tex" },
+        config = function()
+            require("nabla").enable_virt()
+            map("n", "<leader>lm", function()
+                require("nabla").toggle_virt()
+            end)
+        end,
+    },
 })
